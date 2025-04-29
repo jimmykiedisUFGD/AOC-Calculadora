@@ -1,12 +1,10 @@
 import curses
+import sys
 
 def menu_principal(stdscr):
+    curses.curs_set(1)
 
     # Exibe o menu principal usando curses e lê a escolha do usuário
-    curses.curs_set(1)
-    stdscr.clear()
-    stdscr.refresh()
-
     stdscr.addstr(0, 0, "Calculadora Binária")
     stdscr.addstr(1, 0, "Operações disponíveis:")
     stdscr.addstr(2, 2, "Escolha a quantidade de bits:")
@@ -15,13 +13,16 @@ def menu_principal(stdscr):
     stdscr.addstr(5, 2, "* : Multiplicação")
     stdscr.addstr(6, 2, "/ : Divisão")
 
+    # Ecreve o menu na tela
+    stdscr.refresh()
+
+    # Pergunta quantos bits terá a operação
     quantidade_bits = escolher_bits(stdscr)
 
+    # Lê quais serão os operandos e qual será o operador
     num1, op, num2 = ler_operandos_decimal(stdscr)
 
     try:
-        result = ""
-
         if op == "+":
             adicionar(num1, num2, quantidade_bits, stdscr)
         elif op == "-":
@@ -31,14 +32,11 @@ def menu_principal(stdscr):
         elif op == "/":
             dividir(num1, num2, quantidade_bits, stdscr)
         else:
-            result = "Operador inválido"
+            raise ValueError  # Se for qualquer tecla inválida, levanta um erro manualmente
 
-        stdscr.addstr(11, 0, f"Resultado: {result}")
     except ValueError:
-        stdscr.addstr(11, 0, "Erro: Entrada inválida.")
-
-    stdscr.addstr(13, 0, "Pressione qualquer tecla para sair.")
-    stdscr.getch()
+        erro = 'Entrada inválida'
+        mostrar_erro(erro, stdscr)
 
 def limpar_tela(stdscr):
 
@@ -59,7 +57,7 @@ def escolher_bits(stdscr):
 
 def ler_operandos_decimal(stdscr):
 
-    # Pede dois números decimais para o usuário e retorna
+    # Pede dois números decimais e o operador para o usuário e retorna
     stdscr.addstr(7, 0, "Digite o primeiro número: ")
     curses.echo()
     num1 = stdscr.getstr(7, 27, 20).decode("utf-8")
@@ -83,9 +81,35 @@ def binario_para_decimal(binario):
     # Converte binário (em lista/vetor) de volta para decimal
     pass
 
+def finalizar(stdscr):
+    stdscr.clear()
+    stdscr.addstr(0, 0, "Encerrando o programa... ")
+    stdscr.refresh()
+
+    curses.endwin()  # Encerra o modo curses (importante!)
+    sys.exit(0)
+
+def pressione_tecla(stdscr):
+    stdscr.addstr(5, 0, "Pressione a tecla Enter para calcular ou ESC para sair.")
+    stdscr.refresh()
+
+    tecla = stdscr.getch()
+
+    try:
+        if tecla == 13:  # Enter
+            menu_principal(stdscr)
+        elif tecla == 27:  # ESC
+            finalizar(stdscr)
+        else:
+            raise ValueError  # Se for qualquer tecla inválida, levanta um erro manualmente
+    except ValueError:
+        erro = 'Tecla inválida'
+        mostrar_erro(erro, stdscr)
+
 def mostrar_erro(erro, stdscr):
     stdscr.addstr(11, 0, f"Erro: {erro}")
-    stdscr.addstr(10, 0, "Pressione qualquer tecla para calcular.")
+    stdscr.refresh()
+    pressione_tecla(stdscr)
 
 def adicionar(num1, num2, quantidade_bits, stdscr):
 
@@ -105,7 +129,8 @@ def adicionar(num1, num2, quantidade_bits, stdscr):
         mostrar_resultado(resultado_bin, resultado_dec, stdscr)
 
     except ValueError:
-        mostrar_erro("Entrada inválida.", stdscr)
+        erro = 'Entrada inválida'
+        mostrar_erro(erro, stdscr)
 
 def subtrair(num1, num2, quantidade_bits, stdscr):
     try:
@@ -114,8 +139,8 @@ def subtrair(num1, num2, quantidade_bits, stdscr):
         result = a - b
         stdscr.addstr(11, 0, f"Resultado: {result}")
     except ValueError:
-        stdscr.addstr(11, 0, "Erro: Entrada inválida.")
-    stdscr.addstr(10, 0, "Pressione qualquer tecla para calcular.")
+        erro = 'Entrada inválida'
+        mostrar_erro(erro, stdscr)
 
 def multiplicar(num1, num2, quantidade_bits, stdscr):
     # Realiza a multiplicação binária
@@ -125,8 +150,8 @@ def multiplicar(num1, num2, quantidade_bits, stdscr):
         result = a * b
         stdscr.addstr(11, 0, f"Resultado: {result}")
     except ValueError:
-        stdscr.addstr(11, 0, "Erro: Entrada inválida.")
-    stdscr.addstr(10, 0, "Pressione qualquer tecla para calcular.")
+        erro = 'Entrada inválida'
+        mostrar_erro(erro, stdscr)
 
 def dividir(num1, num2, quantidade_bits, stdscr):
     # Realiza a divisão binária
@@ -137,16 +162,26 @@ def dividir(num1, num2, quantidade_bits, stdscr):
             result = a / b
             stdscr.addstr(11, 0, f"Resultado: {result}")
         else:
-            stdscr.addstr(11, 0, "Erro: divisão por zero")
+            erro = 'Não pode dividir por zero'
+            mostrar_erro(erro, stdscr)
     except ValueError:
-        stdscr.addstr(11, 0, "Erro: Entrada inválida.")
-    stdscr.addstr(10, 0, "Pressione qualquer tecla para calcular.")
+        erro = 'Entrada inválida'
+        mostrar_erro(erro, stdscr)
 
 def mostrar_resultado(resultado_bin, resultado_dec, stdscr):
     # Exibe o resultado na tela (binário + decimal)
-    stdscr.addstr(11, 0, f"Resultado em binário: {resultado_bin}")
-    stdscr.addstr(12, 0, f"Resultado em decimal: {resultado_dec}")
-    stdscr.addstr(10, 0, "Pressione qualquer tecla para calcular.")
+
+    limpar_tela(stdscr)
+
+    #aqui começamos a exibir a tela de resultador
+    stdscr.addstr(0, 0, "Resultados")
+    stdscr.addstr(1, 0, "Resultados operação decimal:")
+    stdscr.addstr(2, 0, f"{resultado_dec}")
+
+    stdscr.addstr(1, 32, "|Resultados operação binária:")    
+    stdscr.addstr(2, 32, f"|{resultado_bin}")
+
+    pressione_tecla(stdscr)
 
 if __name__ == "__main__":
     curses.wrapper(menu_principal)
