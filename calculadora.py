@@ -10,7 +10,7 @@ def menu_principal(stdscr):
     stdscr.addstr(linha, 0, "*--**--Calculadora Binária--**--*")
  
     stdscr.addstr(linha+1, 2, "Escolha a quantidade de bits:")
-    quantidade_bits, limite = escolher_bits(stdscr)
+    quantidade_bits = escolher_bits(stdscr)
 
     limpar_tela(stdscr)
     stdscr.addstr(linha+1, 2, "Operações disponíveis:")
@@ -23,9 +23,10 @@ def menu_principal(stdscr):
     stdscr.refresh()
 
     # Lê quais serão os operandos e qual será o operador
-    num1, op, num2 = ler_operandos_decimal(limite, stdscr)
+    num1, op, num2 = ler_operandos_decimal(quantidade_bits, stdscr)
 
     bin1, bin2 = converter_em_binário(num1, num2, quantidade_bits)
+
     # Converte os números decimais para binários
 
     try:
@@ -70,52 +71,57 @@ def escolher_bits(stdscr):
     match bits:
         case '8':
             quantidade_bits = 8
-            limite = 255
         case '16':
             quantidade_bits = 16
-            limite = 65535
         case '32':
             quantidade_bits = 32
-            limite = 4294967295
         case _:
             erro = 'Escolha uma quantidade de bits válida (8, 16 ou 32):'
             mostrar_erro(erro, linha, stdscr)
             return escolher_bits(stdscr)
 
-    return quantidade_bits, limite
+    return quantidade_bits
 
-def ler_operandos_decimal(limite, stdscr):
-
+def ler_operandos_decimal(quantidade_bits, stdscr):
     linha = 6
     stdscr.addstr(0, 0, "*--**--Calculadora Binária--**--*")
 
-    # Pede dois números decimais e o operador para o usuário e retorna
-    stdscr.addstr(linha, 2, f"Digite o primeiro número até {limite}: ")
-    curses.echo()
-    num1 = stdscr.getstr(linha, len(f"Digite o primeiro número até {limite}: ")+2, 20).decode("utf-8")
+    # Calcula os limites com sinal (complemento de dois)
+    limite_inferior = -(2 ** (quantidade_bits - 1))
+    limite_superior = (2 ** (quantidade_bits - 1)) - 1
 
-    stdscr.addstr(linha+1, 2, "Digite o operador (+, -, *, /): ")
-    op = stdscr.getstr(linha+1, len("Digite o operador (+, -, *, /): ")+2, 1).decode("utf-8")
+    try:
+        stdscr.addstr(linha, 2, f"Digite o primeiro número entre {limite_inferior} e {limite_superior}: ")
+        curses.echo()
+        num1 = int(stdscr.getstr(linha, len(f"Digite o primeiro número entre {limite_inferior} e {limite_superior}: ") + 2, 20).decode("utf-8"))
+        if not (limite_inferior <= num1 <= limite_superior):
+            raise ValueError
 
-    stdscr.addstr(linha+2, 2, f"Digite o segundo número até {limite}: ")
-    num2 = stdscr.getstr(linha+2, len(f"Digite o segundo número até {limite}: ")+2, 20).decode("utf-8")
+        stdscr.addstr(linha + 1, 2, "Digite o operador (+, -, *, /): ")
+        op = stdscr.getstr(linha + 1, len("Digite o operador (+, -, *, /): ") + 2, 1).decode("utf-8")
+
+        stdscr.addstr(linha + 2, 2, f"Digite o segundo número entre {limite_inferior} e {limite_superior}: ")
+        num2 = int(stdscr.getstr(linha + 2, len(f"Digite o segundo número entre {limite_inferior} e {limite_superior}: ") + 2, 20).decode("utf-8"))
+        if not (limite_inferior <= num2 <= limite_superior):
+            raise ValueError
+
+    except ValueError:
+        erro = 'Valor fora do intervalo ou inválido, tente novamente:'
+        mostrar_erro(erro, linha, stdscr)
+        return ler_operandos_decimal(quantidade_bits, stdscr)
 
     return num1, op, num2
 
-def converter_em_binário (num1, num2, quantidade_bits, stdscr):
-    if quantidade_bits == 8:
-        bin1 = format(int(num1), '08b')     # Converte para binário com 8 bits colocando 0 suficiente à esquerda
-        bin2 = format(int(num2), '08b')
-    elif quantidade_bits == 16:
-        bin1 = format(int(num1), '016b')    # Converte para binário com 16 bits colocando 0 suficiente à esquerda
-        bin2 = format(int(num2), '016b')
-    elif quantidade_bits == 32:
-        bin1 = format(int(num1), '032b')    # Converte para binário com 32 bits colocando 0 suficiente à esquerda
-        bin2 = format(int(num2), '032b')
-    else:
-        erro = 'Escolha uma quantidade de bits válida (8, 16 ou 32):'
-        converter_em_binário (num1, num2, quantidade_bits)
-        return escolher_bits(stdscr)
+def converter_em_binário(num1, num2, quantidade_bits):
+    def para_binario_complemento_dois(n, bits):
+        if n >= 0:
+            return format(n, f'0{bits}b')
+        else:
+            return format((1 << bits) + n, f'0{bits}b')
+
+    bin1 = para_binario_complemento_dois(num1, quantidade_bits)
+    bin2 = para_binario_complemento_dois(num2, quantidade_bits)
+
     return bin1, bin2
 
 def finalizar(stdscr):
@@ -134,6 +140,7 @@ def pressione_tecla(stdscr):
 
     try:
         if tecla == 13:  # Enter
+            limpar_tela(stdscr)
             menu_principal(stdscr)
         elif tecla == 27:  # ESC
             finalizar(stdscr)
@@ -155,18 +162,16 @@ def multiplicar(bin1, bin2, quantidade_bits, stdscr):
 def dividir(bin1, bin2, quantidade_bits, stdscr):
     pass
 
-def mostrar_resultado(resultado_bin, resultado_dec, stdscr):
+def mostrar_resultado(bin1, bin2, resultado, stdscr):
     # Exibe o resultado na tela (binário + decimal)
 
     limpar_tela(stdscr)
 
     #aqui começamos a exibir a tela de resultador
-    stdscr.addstr(0, 0, "Resultados")
-    stdscr.addstr(1, 0, "Resultados operação decimal:")
-    stdscr.addstr(2, 0, f"{resultado_dec}")
-
-    stdscr.addstr(1, 32, "|Resultados operação binária:")    
-    stdscr.addstr(2, 32, f"|{resultado_bin}")
+    stdscr.addstr(8, 0, f"Primeiro número em binário: {bin1}")
+    stdscr.addstr(9, 0, f"Segundo número em binário:  {bin2}")
+    stdscr.addstr(10, 0, f"Resultado em binário:      {resultado}")
+    stdscr.refresh()
 
     pressione_tecla(stdscr)
 
