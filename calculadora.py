@@ -96,7 +96,7 @@ def ler_operandos_decimal(stdscr):
 
     return num1, op, num2
 
-def binario_para_decimal(binario):
+def decimal_para_binario(binario):
     # Converte binário (em lista/vetor) de volta para decimal
     pass
 
