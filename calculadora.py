@@ -10,7 +10,7 @@ def menu_principal(stdscr):
     stdscr.addstr(linha, 0, "*--**--Calculadora Binária--**--*")
  
     stdscr.addstr(linha+1, 2, "Escolha a quantidade de bits:")
-    quantidade_bits = escolher_bits(stdscr)
+    quantidade_bits, limite = escolher_bits(stdscr)
 
     limpar_tela(stdscr)
     stdscr.addstr(linha+1, 2, "Operações disponíveis:")
@@ -23,17 +23,20 @@ def menu_principal(stdscr):
     stdscr.refresh()
 
     # Lê quais serão os operandos e qual será o operador
-    num1, op, num2 = ler_operandos_decimal(stdscr)
+    num1, op, num2 = ler_operandos_decimal(limite, stdscr)
+
+    bin1, bin2 = converter_em_binário(num1, num2, quantidade_bits)
+    # Converte os números decimais para binários
 
     try:
         if op == "+":
-            adicionar(num1, num2, quantidade_bits, stdscr)
+            somar(bin1, bin2, quantidade_bits, stdscr)
         elif op == "-":
-            subtrair(num1, num2, quantidade_bits, stdscr)
+            subtrair(bin1, bin2, quantidade_bits, stdscr)
         elif op == "*":
-            multiplicar(num1, num2, quantidade_bits, stdscr)
+            multiplicar(bin1, bin2, quantidade_bits, stdscr)
         elif op == "/":
-            dividir(num1, num2, quantidade_bits, stdscr)
+            dividir(bin1, bin2, quantidade_bits, stdscr)
         else:
             raise ValueError  # Se for qualquer tecla inválida, levanta um erro manualmente
 
@@ -64,41 +67,56 @@ def escolher_bits(stdscr):
     curses.echo()
     bits = stdscr.getstr(linha, len('8, 16, 32: ')+2, 2).decode("utf-8")
     
-    try:
-        bits = int(bits)
-        if bits not in [8, 16, 32]:
-            raise ValueError
-    except ValueError:
-        erro = 'Número de bits inválido. Escolha entre 8, 16 ou 32:'
-        mostrar_erro(erro, linha, stdscr)
-        return escolher_bits(stdscr)
-    return bits
-    # Lê a quantidade de bits do usuário
+    match bits:
+        case '8':
+            quantidade_bits = 8
+            limite = 255
+        case '16':
+            quantidade_bits = 16
+            limite = 65535
+        case '32':
+            quantidade_bits = 32
+            limite = 4294967295
+        case _:
+            erro = 'Escolha uma quantidade de bits válida (8, 16 ou 32):'
+            mostrar_erro(erro, linha, stdscr)
+            return escolher_bits(stdscr)
 
-def ler_operandos_decimal(stdscr):
+    return quantidade_bits, limite
+
+def ler_operandos_decimal(limite, stdscr):
 
     linha = 6
     stdscr.addstr(0, 0, "*--**--Calculadora Binária--**--*")
 
     # Pede dois números decimais e o operador para o usuário e retorna
-    stdscr.addstr(linha, 2, "Digite o primeiro número: ")
+    stdscr.addstr(linha, 2, f"Digite o primeiro número até {limite}: ")
     curses.echo()
-    num1 = stdscr.getstr(linha, len("Digite o primeiro número: ")+2, 20).decode("utf-8")
-    #tenho que tratar se o numero cabe na quantidade de bits que foi informado
+    num1 = stdscr.getstr(linha, len(f"Digite o primeiro número até {limite}: ")+2, 20).decode("utf-8")
 
     stdscr.addstr(linha+1, 2, "Digite o operador (+, -, *, /): ")
     op = stdscr.getstr(linha+1, len("Digite o operador (+, -, *, /): ")+2, 1).decode("utf-8")
-    #aqui eu tenho que limitar ao total de 1 operador
 
-    stdscr.addstr(linha+2, 2, "Digite o segundo número: ")
-    num2 = stdscr.getstr(linha+2, len("Digite o segundo número: ")+2, 20).decode("utf-8")
-    #tenho que tratar se o numero cabe na quantidade de bits que foi informado
+    stdscr.addstr(linha+2, 2, f"Digite o segundo número até {limite}: ")
+    num2 = stdscr.getstr(linha+2, len(f"Digite o segundo número até {limite}: ")+2, 20).decode("utf-8")
 
     return num1, op, num2
 
-def decimal_para_binario(binario):
-    # Converte binário (em lista/vetor) de volta para decimal
-    pass
+def converter_em_binário (num1, num2, quantidade_bits, stdscr):
+    if quantidade_bits == 8:
+        bin1 = format(int(num1), '08b')     # Converte para binário com 8 bits colocando 0 suficiente à esquerda
+        bin2 = format(int(num2), '08b')
+    elif quantidade_bits == 16:
+        bin1 = format(int(num1), '016b')    # Converte para binário com 16 bits colocando 0 suficiente à esquerda
+        bin2 = format(int(num2), '016b')
+    elif quantidade_bits == 32:
+        bin1 = format(int(num1), '032b')    # Converte para binário com 32 bits colocando 0 suficiente à esquerda
+        bin2 = format(int(num2), '032b')
+    else:
+        erro = 'Escolha uma quantidade de bits válida (8, 16 ou 32):'
+        converter_em_binário (num1, num2, quantidade_bits)
+        return escolher_bits(stdscr)
+    return bin1, bin2
 
 def finalizar(stdscr):
     stdscr.clear()
@@ -125,62 +143,17 @@ def pressione_tecla(stdscr):
         erro = 'Tecla inválida'
         mostrar_erro(erro, stdscr)
 
-def adicionar(num1, num2, quantidade_bits, stdscr):
+def somar(bin1, bin2, quantidade_bits, stdscr):
+    pass
 
-    # converter os números decimais para binários
-    bin1, bin2 = decimal_para_binario(num1, num2, quantidade_bits)
+def subtrair(bin1, bin2, quantidade_bits, stdscr):
+    pass
 
-    try:
-        # decimal:
-        ad = float(num1)
-        bd = float(num2)
-        
-        # binário:
-        resultado_dec = ad + bd
-        resultado_bin = bin1 + bin2 
+def multiplicar(bin1, bin2, quantidade_bits, stdscr):
+    pass
 
-        # chama a função para imprimir na tela o resultado
-        mostrar_resultado(resultado_bin, resultado_dec, stdscr)
-
-    except ValueError:
-        erro = 'Entrada inválida'
-        mostrar_erro(erro, stdscr)
-
-def subtrair(num1, num2, quantidade_bits, stdscr):
-    try:
-        a = float(num1)
-        b = float(num2)
-        result = a - b
-        stdscr.addstr(11, 0, f"Resultado: {result}")
-    except ValueError:
-        erro = 'Entrada inválida'
-        mostrar_erro(erro, stdscr)
-
-def multiplicar(num1, num2, quantidade_bits, stdscr):
-    # Realiza a multiplicação binária
-    try:
-        a = float(num1)
-        b = float(num2)
-        result = a * b
-        stdscr.addstr(11, 0, f"Resultado: {result}")
-    except ValueError:
-        erro = 'Entrada inválida'
-        mostrar_erro(erro, stdscr)
-
-def dividir(num1, num2, quantidade_bits, stdscr):
-    # Realiza a divisão binária
-    try:
-        a = float(num1)
-        b = float(num2)
-        if b != 0:
-            result = a / b
-            stdscr.addstr(11, 0, f"Resultado: {result}")
-        else:
-            erro = 'Não pode dividir por zero'
-            mostrar_erro(erro, stdscr)
-    except ValueError:
-        erro = 'Entrada inválida'
-        mostrar_erro(erro, stdscr)
+def dividir(bin1, bin2, quantidade_bits, stdscr):
+    pass
 
 def mostrar_resultado(resultado_bin, resultado_dec, stdscr):
     # Exibe o resultado na tela (binário + decimal)
