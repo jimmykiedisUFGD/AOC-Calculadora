@@ -27,11 +27,13 @@ def menu_principal(stdscr):
 
     bin1, bin2 = converter_em_binário(num1, num2, quantidade_bits)
 
+    smag1, smag2 = sinal_magnitude_para_complemento2(bin1), sinal_magnitude_para_complemento2(bin2)
+
     # Converte os números decimais para binários
 
     try:
         if op == "+":
-            somar(bin1, bin2, quantidade_bits, stdscr)
+            somar(bin1, bin2, smag1, smag2, stdscr)
         elif op == "-":
             subtrair(bin1, bin2, quantidade_bits, stdscr)
         elif op == "*":
@@ -81,6 +83,12 @@ def escolher_bits(stdscr):
             return escolher_bits(stdscr)
 
     return quantidade_bits
+
+def sinal_magnitude_para_complemento2(binario):
+    if binario[0] == '0':
+        return binario
+    invertido = ''.join('1' if b == '0' else '0' for b in binario)
+    return somar(invertido, '0' * (len(binario) - 1) + '1')
 
 def ler_operandos_decimal(quantidade_bits, stdscr):
     linha = 6
@@ -150,8 +158,18 @@ def pressione_tecla(stdscr):
         erro = 'Tecla inválida'
         mostrar_erro(erro, stdscr)
 
-def somar(bin1, bin2, quantidade_bits, stdscr):
-    pass
+def somar(bin1, bin2, smag1, smag2, stdscr):
+    resultado = ''
+    carry = 0
+
+    for i in range(len(smag1) - 1, -1, -1):
+        total = carry
+        total += smag1[i] == '1'
+        total += smag2[i] == '1'
+        resultado = ('1' if total % 2 else '0') + resultado
+        carry = 1 if total > 1 else 0
+
+    mostrar_resultado(bin1, bin2, resultado[-len(smag1):], stdscr)
 
 def subtrair(bin1, bin2, quantidade_bits, stdscr):
     pass
