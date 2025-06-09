@@ -166,8 +166,30 @@ def somar(bin1, bin2):
         carry = 1 if total > 1 else 0
     return resultado[-len(bin1):]
 
-def multiplicar(*args, **kwargs):
-    return '0' * len(args[0])
+def multiplicar(bin1, bin2):
+    n = len(bin1)
+    A = '0' * n
+    Q = bin2
+    M = bin1
+    Q_1 = '0'
+
+    for _ in range(n):
+        # Passo 1: Verifica Q0 e Q-1
+        if Q[-1] == '1' and Q_1 == '0':
+            A = somar(A, inverter_bits(M))  # subtração (A = A - M)
+            A = somar(A, '0' * (n - 1) + '1')  # +1 (complemento de dois)
+        elif Q[-1] == '0' and Q_1 == '1':
+            A = somar(A, M)  # A = A + M
+
+        # Passo 2: shift aritmético à direita de A, Q e Q_1
+        combinado = A + Q + Q_1
+        combinado = combinado[0] + combinado[:-1]  # shift com sinal preservado
+
+        A = combinado[:n]
+        Q = combinado[n:2*n]
+        Q_1 = combinado[-1]
+
+    return (A + Q)[-n*2:]  # Resultado final com 2n bits
 
 def dividir(*args, **kwargs):
     return '0' * len(args[0])
