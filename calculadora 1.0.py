@@ -152,7 +152,7 @@ def pressione_tecla(stdscr):
     tecla = stdscr.getch()
 
     try:
-        if tecla == 13:     #13 é o enter (que Deus tenha piedade)
+        if tecla in (10, 13):     #13 é o enter (que Deus tenha piedade)
             limpar_tela(stdscr)
             return menu_principal(stdscr)
         elif tecla == 27:   #27 é o esc
