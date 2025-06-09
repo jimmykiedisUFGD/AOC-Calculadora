@@ -1,5 +1,6 @@
 import curses
 import sys
+import time
 
 def menu_principal(stdscr):
     curses.curs_set(1)
@@ -42,16 +43,22 @@ def menu_principal(stdscr):
         erro = 'Entrada inválida'
         mostrar_erro(erro, stdscr)
 
+
 def mostrar_erro(erro, stdscr, linha=0):
     limpar_tela(stdscr)
     stdscr.addstr(linha-1, 0, f"Erro: {erro}")
     stdscr.refresh()
+    time.sleep(2)
+    return
 
 def limpar_tela(stdscr):
+    #função simples, pra mater melhor organizado as coisas
     stdscr.clear()
     stdscr.refresh()
+    return
 
 def escolher_bits(stdscr):
+    #definindo o limite máximo de bits, aqui eu trato o primeiro passo do overflow
     linha = 2
     stdscr.addstr(linha, 3, "8, 16, 32:")
     curses.echo()
@@ -85,6 +92,7 @@ def ler_operandos_decimal(quantidade_bits, stdscr):
     limite_superior = (2 ** (quantidade_bits - 1)) - 1
 
     try:
+        #vamos receber os valores limitano o numero máximo que e quantidade de bits pode representar
         stdscr.addstr(linha, 2, f"Digite o primeiro número entre {limite_inferior} e {limite_superior}: ")
         curses.echo()
         num1 = int(stdscr.getstr(linha, len(f"Digite o primeiro número entre {limite_inferior} e {limite_superior}: ") + 2, 20).decode("utf-8"))
@@ -98,6 +106,7 @@ def ler_operandos_decimal(quantidade_bits, stdscr):
         if not (limite_inferior <= num2 <= limite_superior): raise ValueError
 
     except ValueError:
+        #se não estiver no intervalo, então ele chama a tela de erro e recomeça.
         erro = 'Valor fora do intervalo ou inválido, tente novamente:'
         mostrar_erro(erro, stdscr, linha)
         return ler_operandos_decimal(quantidade_bits, stdscr)
@@ -105,6 +114,7 @@ def ler_operandos_decimal(quantidade_bits, stdscr):
     return num1, op, num2
 
 def converter_em_binário(num1, num2, quantidade_bits):
+    #vamos fazer uma chamada recursiva para obter o complemento de dois se for menor que zero
     def para_binario_complemento_dois(n, bits):
         if n >= 0:
             return format(n, f'0{bits}b')
@@ -117,6 +127,7 @@ def converter_em_binário(num1, num2, quantidade_bits):
     return bin1, bin2
 
 def finalizar(stdscr):
+    #finalizar interamente todos os recursos que foram iniciados
     stdscr.clear()
     stdscr.addstr(0, 0, "Encerrando o programa... ")
     stdscr.refresh()
@@ -124,36 +135,36 @@ def finalizar(stdscr):
     sys.exit(0)
 
 def pressione_tecla(stdscr):
+    #auxiliar de menu, serve para quando no final do calculo vc poder escolher se quer fazer outro calculo ou não
     stdscr.addstr(5, 0, "Pressione a tecla Enter para calcular ou ESC para sair.")
     stdscr.refresh()
 
     tecla = stdscr.getch()
 
     try:
-        if tecla == 13:
+        if tecla == 13:     #13 é o enter (que Deus tenha piedade)
             limpar_tela(stdscr)
-            menu_principal(stdscr)
-        elif tecla == 27:
+            return menu_principal(stdscr)
+        elif tecla == 27:   #27 é o esc
             finalizar(stdscr)
         else:
             raise ValueError
     except ValueError:
+        #se for digitada uma tecla não esperada, ele mostra o erro
         erro = 'Tecla inválida'
         mostrar_erro(erro, stdscr)
+        return pressione_tecla(stdscr)
 
-def somar(smag1, smag2):
+def somar(bin1, bin2):
     resultado = ''
     carry = 0
-    for i in range(len(smag1) - 1, -1, -1):
+    for i in range(len(bin1) - 1, -1, -1):
         total = carry
-        total += smag1[i] == '1'
-        total += smag2[i] == '1'
+        total += bin1[i] == '1'
+        total += bin2[i] == '1'
         resultado = ('1' if total % 2 else '0') + resultado
         carry = 1 if total > 1 else 0
-    return resultado[-len(smag1):]
-
-def subtrair(*args, **kwargs):
-    pass
+    return resultado[-len(bin1):]
 
 def multiplicar(*args, **kwargs):
     return '0' * len(args[0])
