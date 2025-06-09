@@ -4,7 +4,6 @@ import time
 
 def menu_principal(stdscr):
     curses.curs_set(1)
-
     linha = 0
     stdscr.addstr(linha, 0, "*--**--Calculadora Binária--**--*")
  
@@ -27,23 +26,34 @@ def menu_principal(stdscr):
     try:
         if op == "+":
             resultado = somar(bin1, bin2)
+            mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr)
         elif op == "-":
             bin2_negado = somar(inverter_bits(bin2), '0' * (quantidade_bits - 1) + '1')
             resultado = somar(bin1, bin2_negado)
+            mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr)
         elif op == "*":
             resultado = multiplicar(bin1, bin2)
+            mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr)
         elif op == "/":
-            resultado = dividir(bin1, bin2)
+            # Passa os valores absolutos para a função dividir
+            quociente, resto = dividir(
+                format(abs(num1), f'0{quantidade_bits}b'),
+                format(abs(num2), f'0{quantidade_bits}b')
+            )
+
+            # Ajusta o sinal do quociente se os sinais forem diferentes
+            if (num1 < 0) ^ (num2 < 0):
+                quociente = inverter_bits(quociente)
+                quociente = somar(quociente, '0' * (quantidade_bits - 1) + '1')
+            
+            mostrar_resultado(bin1, bin2, quociente[-quantidade_bits:], stdscr, resto)
         else:
             raise ValueError
-
-        mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr)
-
+        
     except ValueError:
         erro = 'Entrada inválida'
         mostrar_erro(erro, stdscr)
-
-
+        
 def mostrar_erro(erro, stdscr, linha=0):
     limpar_tela(stdscr)
     stdscr.addstr(linha-1, 0, f"Erro: {erro}")
@@ -174,31 +184,56 @@ def multiplicar(bin1, bin2):
     Q_1 = '0'
 
     for _ in range(n):
-        # Passo 1: Verifica Q0 e Q-1
+        #passo 1: Verifica Q0 e Q-1
         if Q[-1] == '1' and Q_1 == '0':
-            A = somar(A, inverter_bits(M))  # subtração (A = A - M)
-            A = somar(A, '0' * (n - 1) + '1')  # +1 (complemento de dois)
+            A = somar(A, inverter_bits(M))  #subtração (A = A - M)
+            A = somar(A, '0' * (n - 1) + '1')  #+1 (complemento de dois)
         elif Q[-1] == '0' and Q_1 == '1':
-            A = somar(A, M)  # A = A + M
+            A = somar(A, M)  #A = A + M
 
         # Passo 2: shift aritmético à direita de A, Q e Q_1
         combinado = A + Q + Q_1
-        combinado = combinado[0] + combinado[:-1]  # shift com sinal preservado
+        combinado = combinado[0] + combinado[:-1]  #shift com sinal preservado
 
         A = combinado[:n]
         Q = combinado[n:2*n]
         Q_1 = combinado[-1]
 
-    return (A + Q)[-n*2:]  # Resultado final com 2n bits
+    return (A + Q)[-n*2:]  #Resultado final com 2n bits
 
-def dividir(*args, **kwargs):
-    return '0' * len(args[0])
+def dividir(smag1, smag2):
+    n = len(smag1)
 
-def mostrar_resultado(bin1, bin2, resultado, stdscr):
+    # Converter binários em inteiros
+    dividend = int(smag1, 2)
+    divisor = int(smag2, 2)
+
+    if divisor == 0:
+        raise ValueError("Divisão por zero não é permitida.")
+
+    quotient = dividend // divisor
+    remainder = dividend % divisor
+
+    # Converter de volta para binário com n bits
+    quociente_bin = format(quotient, f'0{n}b')
+    resto_bin = format(remainder, f'0{n}b')
+
+    return quociente_bin, resto_bin
+
+def shift_esquerda(A, Q):
+    combinado = A + Q
+    combinado = combinado[1:] + '0'  # desloca tudo à esquerda
+    novo_A = combinado[:len(A)]
+    novo_Q = combinado[len(A):]
+    return novo_A, novo_Q
+
+def mostrar_resultado(bin1, bin2, resultado, stdscr, resto=None):
     limpar_tela(stdscr)
     stdscr.addstr(8, 0, f"Primeiro número em binário: {bin1}")
     stdscr.addstr(9, 0, f"Segundo número em binário:  {bin2}")
     stdscr.addstr(10, 0, f"Resultado em binário:      {resultado}")
+    if resto is not None:
+        stdscr.addstr(11, 0, f"O resto é:                {resto}")
     stdscr.refresh()
     pressione_tecla(stdscr)
 
