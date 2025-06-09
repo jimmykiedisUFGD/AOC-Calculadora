@@ -32,8 +32,8 @@ def menu_principal(stdscr):
             resultado = somar_subtrair(bin1, bin2_negado)
             mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr)
         elif op == "*":
-            resultado = multiplicar(bin1, bin2)
-            mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr)
+            resultado, overflow = multiplicar(bin1, bin2)
+            mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr, resto=None, overflow=overflow)
         elif op == "/":
             # Passa os valores absolutos para a função dividir
             quociente, resto = dividir(
@@ -184,22 +184,33 @@ def multiplicar(bin1, bin2):
     Q_1 = '0'
 
     for _ in range(n):
-        #passo 1: Verifica Q0 e Q-1
         if Q[-1] == '1' and Q_1 == '0':
-            A = somar_subtrair(A, inverter_bits(M))  #subtração (A = A - M)
-            A = somar_subtrair(A, '0' * (n - 1) + '1')  #+1 (complemento de dois)
+            A = somar_subtrair(A, inverter_bits(M))
+            A = somar_subtrair(A, '0' * (n - 1) + '1')
         elif Q[-1] == '0' and Q_1 == '1':
-            A = somar_subtrair(A, M)  #A = A + M
+            A = somar_subtrair(A, M)
 
-        # Passo 2: shift aritmético à direita de A, Q e Q_1
         combinado = A + Q + Q_1
-        combinado = combinado[0] + combinado[:-1]  #shift com sinal preservado
+        combinado = combinado[0] + combinado[:-1]
 
         A = combinado[:n]
         Q = combinado[n:2*n]
         Q_1 = combinado[-1]
 
-    return (A + Q)[-n*2:]  #Resultado final com 2n bits
+    resultado_completo = A + Q  # 2n bits
+    resultado_final = resultado_completo[-n:]  # n bits (para exibir)
+
+    # Verificação de overflow correta
+    valor_inteiro = int(resultado_completo, 2)
+    if resultado_completo[0] == '1':
+        valor_inteiro -= (1 << (2 * n))
+
+    minimo = -(1 << (n - 1))
+    maximo = (1 << (n - 1)) - 1
+
+    overflow_detectado = not (minimo <= valor_inteiro <= maximo)
+
+    return resultado_final, overflow_detectado
 
 def dividir(smag1, smag2):
     n = len(smag1)
@@ -227,13 +238,15 @@ def shift_esquerda(A, Q):
     novo_Q = combinado[len(A):]
     return novo_A, novo_Q
 
-def mostrar_resultado(bin1, bin2, resultado, stdscr, resto=None):
+def mostrar_resultado(bin1, bin2, resultado, stdscr, resto=None, overflow=False):
     limpar_tela(stdscr)
     stdscr.addstr(8, 0, f"Primeiro número em binário: {bin1}")
     stdscr.addstr(9, 0, f"Segundo número em binário:  {bin2}")
     stdscr.addstr(10, 0, f"Resultado em binário:      {resultado}")
     if resto is not None:
         stdscr.addstr(11, 0, f"O resto é:                {resto}")
+    if overflow:
+        stdscr.addstr(12, 0, "!!! OVERFLOW DETECTADO !!!")
     stdscr.refresh()
     pressione_tecla(stdscr)
 
