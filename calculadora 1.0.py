@@ -25,11 +25,11 @@ def menu_principal(stdscr):
 
     try:
         if op == "+":
-            resultado = somar(bin1, bin2)
+            resultado = somar_subtrair(bin1, bin2)
             mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr)
         elif op == "-":
-            bin2_negado = somar(inverter_bits(bin2), '0' * (quantidade_bits - 1) + '1')
-            resultado = somar(bin1, bin2_negado)
+            bin2_negado = somar_subtrair(inverter_bits(bin2), '0' * (quantidade_bits - 1) + '1')
+            resultado = somar_subtrair(bin1, bin2_negado)
             mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr)
         elif op == "*":
             resultado = multiplicar(bin1, bin2)
@@ -44,7 +44,7 @@ def menu_principal(stdscr):
             # Ajusta o sinal do quociente se os sinais forem diferentes
             if (num1 < 0) ^ (num2 < 0):
                 quociente = inverter_bits(quociente)
-                quociente = somar(quociente, '0' * (quantidade_bits - 1) + '1')
+                quociente = somar_subtrair(quociente, '0' * (quantidade_bits - 1) + '1')
             
             mostrar_resultado(bin1, bin2, quociente[-quantidade_bits:], stdscr, resto)
         else:
@@ -89,7 +89,7 @@ def sinal_magnitude_para_complemento2(binario):
     if binario[0] == '0':
         return binario
     invertido = inverter_bits(binario)
-    return somar(invertido, '0' * (len(binario) - 1) + '1')
+    return somar_subtrair(invertido, '0' * (len(binario) - 1) + '1')
 
 def inverter_bits(binario):
     return ''.join('1' if b == '0' else '0' for b in binario)
@@ -165,7 +165,7 @@ def pressione_tecla(stdscr):
         mostrar_erro(erro, stdscr)
         return pressione_tecla(stdscr)
 
-def somar(bin1, bin2):
+def somar_subtrair(bin1, bin2):
     resultado = ''
     carry = 0
     for i in range(len(bin1) - 1, -1, -1):
@@ -186,10 +186,10 @@ def multiplicar(bin1, bin2):
     for _ in range(n):
         #passo 1: Verifica Q0 e Q-1
         if Q[-1] == '1' and Q_1 == '0':
-            A = somar(A, inverter_bits(M))  #subtração (A = A - M)
-            A = somar(A, '0' * (n - 1) + '1')  #+1 (complemento de dois)
+            A = somar_subtrair(A, inverter_bits(M))  #subtração (A = A - M)
+            A = somar_subtrair(A, '0' * (n - 1) + '1')  #+1 (complemento de dois)
         elif Q[-1] == '0' and Q_1 == '1':
-            A = somar(A, M)  #A = A + M
+            A = somar_subtrair(A, M)  #A = A + M
 
         # Passo 2: shift aritmético à direita de A, Q e Q_1
         combinado = A + Q + Q_1
