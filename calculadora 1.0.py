@@ -3,7 +3,9 @@ import sys
 import time
 
 def menu_principal(stdscr):
+    # inicia dizendo que o cursor será invisibilizado
     curses.curs_set(1)
+    # organizei através de uma variável incrementativa
     linha = 0
     stdscr.addstr(linha, 0, "*--**--Calculadora Binária--**--*")
  
@@ -19,8 +21,9 @@ def menu_principal(stdscr):
 
     stdscr.refresh()
 
+    # obtendo o valor do usuário
     num1, op, num2 = ler_operandos_decimal(quantidade_bits, stdscr)
-
+    # convertendo o valor para binário.
     bin1, bin2 = converter_em_binário(num1, num2, quantidade_bits)
 
     try:
@@ -28,20 +31,22 @@ def menu_principal(stdscr):
             resultado = somar_subtrair(bin1, bin2)
             mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr)
         elif op == "-":
+            # ja busco criar o segundo binário negado pra mandar para a função de somar subtrair
             bin2_negado = somar_subtrair(inverter_bits(bin2), '0' * (quantidade_bits - 1) + '1')
             resultado = somar_subtrair(bin1, bin2_negado)
             mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr)
         elif op == "*":
+            # chama a função de multiplicar e ela retorna o valor e o bool de um caso de overflow
             resultado, overflow = multiplicar(bin1, bin2)
             mostrar_resultado(bin1, bin2, resultado[-quantidade_bits:], stdscr, resto=None, overflow=overflow)
         elif op == "/":
-            # Passa os valores absolutos para a função dividir
+            # passa os valores absolutos para a função dividir, retona o resto e o cociente
             quociente, resto = dividir(
                 format(abs(num1), f'0{quantidade_bits}b'),
                 format(abs(num2), f'0{quantidade_bits}b')
             )
 
-            # Ajusta o sinal do quociente se os sinais forem diferentes
+            # ajusta o sinal do quociente se os sinais forem diferentes
             if (num1 < 0) ^ (num2 < 0):
                 quociente = inverter_bits(quociente)
                 quociente = somar_subtrair(quociente, '0' * (quantidade_bits - 1) + '1')
@@ -56,13 +61,14 @@ def menu_principal(stdscr):
         
 def mostrar_erro(erro, stdscr, linha=0):
     limpar_tela(stdscr)
+    # recebe o erro por paramêtro, avisa o usuário, espera 2 seundos e retorna para onde foi chamado
     stdscr.addstr(linha-1, 0, f"Erro: {erro}")
     stdscr.refresh()
     time.sleep(2)
     return
 
 def limpar_tela(stdscr):
-    #função simples, pra mater melhor organizado as coisas
+    # função simples, pra mater melhor organizado as coisas
     stdscr.clear()
     stdscr.refresh()
     return
@@ -79,30 +85,33 @@ def escolher_bits(stdscr):
         case '16': quantidade_bits = 16
         case '32': quantidade_bits = 32
         case _: 
-            erro = 'Escolha uma quantidade de bits válida (8, 16 ou 32):'
+            erro = 'Escolha uma quantidade de bits válida dentre as opções (8, 16 ou 32):'
             mostrar_erro(erro, stdscr, linha)
             return escolher_bits(stdscr)
 
     return quantidade_bits
 
 def sinal_magnitude_para_complemento2(binario):
+    # criando um função separada para controlar o sinal magnitude
     if binario[0] == '0':
         return binario
     invertido = inverter_bits(binario)
     return somar_subtrair(invertido, '0' * (len(binario) - 1) + '1')
 
 def inverter_bits(binario):
+    # aqui temos o complemento de um
     return ''.join('1' if b == '0' else '0' for b in binario)
 
 def ler_operandos_decimal(quantidade_bits, stdscr):
     linha = 6
     stdscr.addstr(0, 0, "*--**--Calculadora Binária--**--*")
 
+    # definindo os limites para o numero, não pode exeder o limite de representáveis 2^quantidade de bits
     limite_inferior = -(2 ** (quantidade_bits - 1))
     limite_superior = (2 ** (quantidade_bits - 1)) - 1
 
     try:
-        #vamos receber os valores limitano o numero máximo que e quantidade de bits pode representar
+        # vamos receber os valores limitano o numero máximo que e quantidade de bits pode representar
         stdscr.addstr(linha, 2, f"Digite o primeiro número entre {limite_inferior} e {limite_superior}: ")
         curses.echo()
         num1 = int(stdscr.getstr(linha, len(f"Digite o primeiro número entre {limite_inferior} e {limite_superior}: ") + 2, 20).decode("utf-8"))
@@ -116,7 +125,7 @@ def ler_operandos_decimal(quantidade_bits, stdscr):
         if not (limite_inferior <= num2 <= limite_superior): raise ValueError
 
     except ValueError:
-        #se não estiver no intervalo, então ele chama a tela de erro e recomeça.
+        # se não estiver no intervalo, então ele chama a tela de erro e recomeça.
         erro = 'Valor fora do intervalo ou inválido, tente novamente:'
         mostrar_erro(erro, stdscr, linha)
         return ler_operandos_decimal(quantidade_bits, stdscr)
@@ -124,7 +133,7 @@ def ler_operandos_decimal(quantidade_bits, stdscr):
     return num1, op, num2
 
 def converter_em_binário(num1, num2, quantidade_bits):
-    #vamos fazer uma chamada recursiva para obter o complemento de dois se for menor que zero
+    # vamos fazer uma chamada recursiva para obter o complemento de dois se for maior ou igual a zero
     def para_binario_complemento_dois(n, bits):
         if n >= 0:
             return format(n, f'0{bits}b')
@@ -137,7 +146,7 @@ def converter_em_binário(num1, num2, quantidade_bits):
     return bin1, bin2
 
 def finalizar(stdscr):
-    #finalizar interamente todos os recursos que foram iniciados
+    # finalizar interamente todos os recursos que foram iniciados
     stdscr.clear()
     stdscr.addstr(0, 0, "Encerrando o programa... ")
     stdscr.refresh()
@@ -145,14 +154,14 @@ def finalizar(stdscr):
     sys.exit(0)
 
 def pressione_tecla(stdscr):
-    #auxiliar de menu, serve para quando no final do calculo vc poder escolher se quer fazer outro calculo ou não
+    # auxiliar de menu, serve para quando no final do calculo vc poder escolher se quer fazer outro calculo ou não
     stdscr.addstr(5, 0, "Pressione a tecla Enter para calcular ou ESC para sair.")
     stdscr.refresh()
 
     tecla = stdscr.getch()
 
     try:
-        if tecla in (10, 13):     #13 é o enter (que Deus tenha piedade)
+        if tecla in (10, 13):     #10 e o 13 é o enter (que Deus tenha piedade)
             limpar_tela(stdscr)
             return menu_principal(stdscr)
         elif tecla == 27:   #27 é o esc
@@ -166,6 +175,7 @@ def pressione_tecla(stdscr):
         return pressione_tecla(stdscr)
 
 def somar_subtrair(bin1, bin2):
+    # o resultado é incrementativo, começa vazio e vai sendo adicionado o valor do laço bit-a-bit
     resultado = ''
     carry = 0
     for i in range(len(bin1) - 1, -1, -1):
@@ -177,6 +187,7 @@ def somar_subtrair(bin1, bin2):
     return resultado[-len(bin1):]
 
 def multiplicar(bin1, bin2):
+    # será usado o algoritmo de multiplicação de booth, o que foi ensinado na aula 
     n = len(bin1)
     A = '0' * n
     Q = bin2
@@ -197,10 +208,10 @@ def multiplicar(bin1, bin2):
         Q = combinado[n:2*n]
         Q_1 = combinado[-1]
 
-    resultado_completo = A + Q  # 2n bits
+    resultado_completo = A + Q  # 2n bits, concatenação 
     resultado_final = resultado_completo[-n:]  # n bits (para exibir)
 
-    # Verificação de overflow correta
+    # verificação de overflow correta
     valor_inteiro = int(resultado_completo, 2)
     if resultado_completo[0] == '1':
         valor_inteiro -= (1 << (2 * n))
@@ -215,7 +226,7 @@ def multiplicar(bin1, bin2):
 def dividir(smag1, smag2):
     n = len(smag1)
 
-    # Converter binários em inteiros
+    # converter binários em inteiros
     dividend = int(smag1, 2)
     divisor = int(smag2, 2)
 
@@ -225,7 +236,7 @@ def dividir(smag1, smag2):
     quotient = dividend // divisor
     remainder = dividend % divisor
 
-    # Converter de volta para binário com n bits
+    # converter de volta para binário com n bits
     quociente_bin = format(quotient, f'0{n}b')
     resto_bin = format(remainder, f'0{n}b')
 
@@ -240,13 +251,13 @@ def shift_esquerda(A, Q):
 
 def mostrar_resultado(bin1, bin2, resultado, stdscr, resto=None, overflow=False):
     limpar_tela(stdscr)
-    stdscr.addstr(8, 0, f"Primeiro número em binário: {bin1}")
+    stdscr.addstr(8, 0, f"Primeiro número em binário: {bin1}") #debuger para somar manualmente se necessário
     stdscr.addstr(9, 0, f"Segundo número em binário:  {bin2}")
-    stdscr.addstr(10, 0, f"Resultado em binário:      {resultado}")
+    stdscr.addstr(10, 0, f"Resultado em binário:      {resultado}") #resultado esperado
     if resto is not None:
-        stdscr.addstr(11, 0, f"O resto é:                {resto}")
+        stdscr.addstr(11, 0, f"O resto é:                {resto}") # em caso de resto
     if overflow:
-        stdscr.addstr(12, 0, "!!! OVERFLOW DETECTADO !!!")
+        stdscr.addstr(12, 0, "!!! OVERFLOW DETECTADO !!!") # em caso de overfloiw
     stdscr.refresh()
     pressione_tecla(stdscr)
 
