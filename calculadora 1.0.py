@@ -3,7 +3,7 @@ import sys
 import time
 
 def menu_principal(stdscr):
-    # inicia dizendo que o cursor será invisibilizado
+    # inicia dizendo que o cursor será invisível
     curses.curs_set(1)
     # organizei através de uma variável incrementativa
     linha = 0
